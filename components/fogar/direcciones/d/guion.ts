@@ -37,7 +37,7 @@ export const VISIBLE: Record<Estacion, [number, number]> = {
 export const ORDEN: Estacion[] = ["portada", "gateway", "voz", "balda", "pared", "cierre"];
 export const estacionDe = (f: number): Estacion | null => ORDEN.find((e) => f >= VISIBLE[e][0] && f <= VISIBLE[e][1]) ?? null;
 /** Scroll (vh sobre ALTO_VH) al que salta la navegación: dentro de la parada, con el texto ya puesto. */
-export const ANCLA: Record<Estacion, number> = { portada: 0, gateway: 190, voz: 345, balda: 640, pared: 1045, cierre: 1300 };
+export const ANCLA: Record<Estacion, number> = { portada: 0, gateway: 190, voz: 345, balda: 810, pared: 1045, cierre: 1300 };
 /** Imagen fija de cada estación en el modo apilado (spec §4.1). */
 export const FIJA: Record<Exclude<Estacion, "cierre">, number> = { portada: 0, gateway: 60, voz: 96, balda: 187, pared: 265 };
 

@@ -18,10 +18,7 @@ export type Bus = {
 /** Deja un valor para la capa WebGL (fuera del render de React). */
 export const ponExtra = (bus: Bus, clave: string, valor: number) => { bus.extra = { ...bus.extra, [clave]: valor }; };
 
-/** Apunta el fotograma pintado; devuelve true si ha cambiado la estación. */
-export function pinta(bus: Bus, i: number, canvas: HTMLCanvasElement, e: Bus["estacion"]) {
+/** Apunta el fotograma pintado (la estación no: sale del scroll). */
+export function pinta(bus: Bus, i: number, canvas: HTMLCanvasElement) {
   bus.frame = i; bus.canvas = canvas; bus.dirty = true;
-  if (e === bus.estacion) return false;
-  bus.estacion = e;
-  return true;
 }
