@@ -4,6 +4,7 @@ import { routing } from "./routing";
 
 // Un archivo de mensajes por página además del común, para que cada página se edite sin pisar a las demás.
 const PAGINAS = ["diy", "tv"] as const;
+export const TIME_ZONE = "Europe/Madrid";
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale;
@@ -13,5 +14,6 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   const comun = (await import(`../messages/${locale}.json`)).default;
   const paginas = await Promise.all(PAGINAS.map((p) => import(`../messages/${p}.${locale}.json`).then((m) => m.default)));
-  return { locale, messages: Object.assign({}, comun, ...paginas) };
+  // Zona fija: las fechas (p. ej. del DIY) salen iguales en servidor y cliente.
+  return { locale, timeZone: TIME_ZONE, messages: Object.assign({}, comun, ...paginas) };
 });

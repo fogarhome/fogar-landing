@@ -2,7 +2,7 @@
   "tv": {
     "saltar": "Skip the walk",
     "meta": {
-      "title": "Fogar TV — You talk. The TV handles it.",
+      "title": "Fogar TV: turn your TV into your voice assistant screen",
       "description": "Fogar TV turns the TV you already own into Fogar's screen: it answers without covering what you watch, your phone is the remote, and it's an open ecosystem you can plug your own things into."
     },
     "s1": {
@@ -79,9 +79,11 @@
     "s8": {
       "headline": "It's not an idea. It already works.",
       "line": "It works today in our living room.",
+      "setUp": "Set it up on your TV",
       "ctaTalk": "Let's talk",
       "back": "Back to home",
-      "code": "Code on GitHub"
+      "code": "Code on GitHub",
+      "diy": "More in DIY"
     },
     "chat": {
       "series1You": "Fogar, where was this filmed?",

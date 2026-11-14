@@ -20,6 +20,7 @@ const h2 = "p-titulo font-display text-[clamp(32px,4.6vw,64px)] leading-[1.04] t
 // En media columna (5/12) el h2 grande parte en cinco líneas en inglés.
 const h2Medio = h2.replace("text-[clamp(32px,4.6vw,64px)]", "text-[clamp(32px,3.6vw,52px)]");
 const lead = "max-w-[40ch] text-[clamp(17px,1.6vw,22px)] leading-[1.42] text-[color:var(--hueso-suave)]";
+const OPENCLAW = "https://github.com/openclaw/openclaw";
 const i = (n: number) => ({ "--i": n }) as CSSProperties;
 
 function Bloque({ id, titulo, piedra = false, cabeza, children }: { id: string; titulo: string; piedra?: boolean; cabeza?: ReactNode; children: ReactNode }) {
@@ -88,8 +89,17 @@ export async function Resto() {
           <div className="md:col-span-5">
             <h2 id="instala-t" tabIndex={-1} className={`${h2} p-entra`}>{t("instala.titulo")}</h2>
             <p className={`${lead} mt-5 p-entra`} style={i(1)}>{t("instala.lead")}</p>
-            <p className="mt-6 max-w-[44ch] text-[15px] leading-[1.55] text-[color:var(--hueso-suave)] p-entra" style={i(2)}>{t("instala.requisitos")}</p>
-            <p className="mt-6 flex flex-wrap gap-x-8 gap-y-1 text-[17px] p-entra" style={i(3)}>
+            <p className="mt-6 max-w-[44ch] text-[17px] leading-[1.55] text-[color:var(--hueso-suave)] p-entra" style={i(2)}>{t("instala.que")}</p>
+            <p className="mt-4 max-w-[44ch] text-[15px] leading-[1.55] text-[color:var(--hueso-suave)] p-entra" style={i(2)}>
+              {t.rich("instala.requisitos", { openclaw: (c) => <a href={OPENCLAW} className="f-enlace f-foco text-[color:var(--hueso)]">{c}</a> })}
+            </p>
+            <p className="mt-6 max-w-[44ch] text-[17px] leading-[1.55] p-entra" style={i(3)}>
+              {t.rich("instala.despues", {
+                tv: (c) => <Link href="/fogar-tv" className="f-enlace f-foco">{c}</Link>,
+                voz: (c) => <a href={REPOS.voice} className="f-enlace f-foco">{c}</a>,
+              })}
+            </p>
+            <p className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-[17px] p-entra" style={i(3)}>
               <Link href="/diy" className="f-enlace f-foco inline-flex min-h-11 items-center">{t("instala.diy")}</Link>
               <Link href="/diy/como-esta-hecho-fogar" className="f-enlace f-foco inline-flex min-h-11 items-center">{t("instala.como")}</Link>
             </p>
@@ -170,16 +180,16 @@ export async function Resto() {
       <Bloque id="por-donde-seguir" titulo={t("puertas.titulo")}>
         <ul className="p-puertas mt-12 md:mt-16">
           <li className="p-entra md:col-span-7" style={i(1)}>
-            <Link href="/diy" className="p-puerta p-puerta-llena">
+            <a href="#instala" className="p-puerta p-puerta-llena">
               <span className="font-display text-[clamp(30px,3.8vw,52px)] leading-[1.04] tracking-[-0.035em]">{puertas[0][0]} {flecha}</span>
               <span className="p-llena-d mt-4 block max-w-[34ch] text-[17px] leading-[1.5]">{puertas[0][1]}</span>
-            </Link>
+            </a>
           </li>
           <li className="p-entra md:col-span-5" style={i(2)}>
             <Link href="/fogar-tv" className="p-puerta">
               <span className="p-mini" aria-hidden>
                 {/* eslint-disable-next-line @next/next/no-img-element -- el mismo fotograma de la escena, ya en caché */}
-                <img src="/lab/secuencia/v6/1280/f_000.avif" alt="" loading="lazy" decoding="async" />
+                <img src="/media/secuencia/v6/1280/f_000.avif" alt="" loading="lazy" decoding="async" />
                 <span className="p-mini-pantalla">
                   <span className="p-mini-marca">Fogar</span>
                   <span>{tRaiz("tele.tiempo")}</span>

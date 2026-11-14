@@ -1,74 +1,74 @@
 import type { ComponentType } from "react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import type { ArticuloContenido } from "@/content/fogar/diy/articulo.es";
-import { FECHA, PROBADO } from "@/content/fogar/diy/entrada";
-import type { IndiceContenido } from "@/content/fogar/diy/indice.es";
+import { diyRelacionados, fechaLarga, plantillaDe, type Entrada } from "@/content/fogar/diy";
 import { INSTALL, PROTOCOLO, REPOS } from "@/lib/repos";
 import { Casa } from "./Casa";
 import { Comando } from "./Comando";
+import { Datos } from "./Datos";
 import { Escenario } from "./Escenario";
 import { Hilo } from "./Hilo";
 import "./diy.css";
 
 // Markup fijo y propio (content/fogar/diy), no entrada de usuarios.
 const Html = ({ html }: { html: string }) => <div className="contents" dangerouslySetInnerHTML={{ __html: html }} />;
+// Figuras del ecosistema Fogar, solo en la plantilla «escenario»: van donde la sección marca <!--figura-->.
 const FIGURA: Record<string, ComponentType> = { resumen: Hilo, casa: Casa };
 
 /**
- * /diy/como-esta-hecho-fogar: columna de lectura con un hilo en el margen que nace del titular y, al lado, el
- * escenario sticky (línea viva, mapa de piezas, recorrido e índice). Acaba en «Móntalo».
+ * /diy/[slug]: columna de lectura con un hilo en el margen que nace del titular e índice lateral de secciones.
+ * Plantilla «escenario» (ecosistema Fogar): el lateral lleva además línea viva y mapa de piezas, y van las figuras.
+ * `instalar` cierra con «Móntalo». Al final, «Sigue leyendo» si hay otros artículos en el mismo idioma.
  */
-export async function Articulo({ c, ficha }: { c: ArticuloContenido; ficha: IndiceContenido["entradas"][number] }) {
+export async function Articulo({ e: { meta, c }, locale }: { e: Entrada; locale: string }) {
   const t = await getTranslations("diy.articulo");
+  const td = await getTranslations("diy");
   const ti = await getTranslations("diy.indice.instala");
+  const escenario = plantillaDe(meta) === "escenario";
   const items = c.secciones.map(({ id, toc }) => ({ id, toc }));
+  const relacionados = diyRelacionados(locale, meta.slug);
   const puertas = [
     { href: `${REPOS.gateway}#readme`, label: t("montalo.readme") },
+    { href: `${REPOS.voice}#readme`, label: t("montalo.voice") },
     { href: PROTOCOLO, label: t("montalo.protocolo") },
     { href: REPOS.wakeTrainer, label: t("montalo.wake") },
   ];
 
   return (
     <div className="diy">
-      <Escenario items={items}>
+      <Escenario items={items} mapa={escenario}>
         <article className="min-w-0">
-          <p className="text-[15px] text-[color:var(--hueso-tenue)]">
-            <Link href="/diy" className="f-enlace f-foco">DIY</Link>
-          </p>
+          <nav aria-label={t("migas")} className="diy-migas">
+            <ol>
+              <li><Link href="/diy" className="f-enlace f-foco">DIY</Link></li>
+              {/* el tema, sin enlace hasta que haya páginas de tema */}
+              <li>{td(`temas.${meta.tema}`)}</li>
+              <li aria-current="page">{c.meta.title}</li>
+            </ol>
+          </nav>
           <h1 id="texto" tabIndex={-1} className="mt-5 max-w-[22ch] font-display text-[clamp(34px,5vw,60px)] leading-[1.04] tracking-[-0.035em] text-[color:var(--hueso)] [text-wrap:balance]">
             {c.h1}
           </h1>
 
           <div className="diy-cuerpo">
-            <p className="flex flex-wrap gap-x-3 gap-y-1 pt-6 text-[14px] text-[color:var(--hueso-tenue)]">
-              <span className="text-[color:var(--hueso)]">{ficha.tipo}</span>
-              <span aria-hidden="true">·</span><span>{ficha.estado}</span>
-              <span aria-hidden="true">·</span><span>{t("dificultad")} {ficha.dificultad.toLowerCase()}</span>
-              <span aria-hidden="true">·</span><span>{ficha.lectura}</span>
-              <span aria-hidden="true">·</span><time dateTime={FECHA}>{ficha.fecha}</time>
-            </p>
-            <details className="mt-3 text-[14px] text-[color:var(--hueso-tenue)]">
-              <summary className="f-foco inline-flex min-h-11 cursor-pointer items-center">
-                {t("probadoCon")}&nbsp;<span className="text-[color:var(--hueso-suave)]">{PROBADO[0]}</span>&nbsp;{t("piezasMas", { n: PROBADO.length - 1 })}
-              </summary>
-              <ul className="mt-1 grid gap-1 pl-4 text-[color:var(--hueso-suave)]">{PROBADO.map((p) => <li key={p}>{p}</li>)}</ul>
-            </details>
+            <Datos meta={meta} locale={locale} actualizado className="pt-6" />
+            {meta.probado && (
+              <details className="diy-desplegable mt-3 text-[14px] text-[color:var(--hueso-tenue)]">
+                <summary className="f-foco inline-flex min-h-11 cursor-pointer items-center">
+                  {t("probadoCon")}&nbsp;<span className="text-[color:var(--hueso-suave)]">{meta.probado[0]}</span>
+                  {meta.probado.length > 1 && <>&nbsp;{t("piezasMas", { n: meta.probado.length - 1 })}</>}
+                </summary>
+                <ul className="mt-1 grid gap-1 pl-4 text-[color:var(--hueso-suave)]">{meta.probado.map((p) => <li key={p}>{p}</li>)}</ul>
+              </details>
+            )}
 
             <div className="diy-prosa mt-10">
               <p className="text-[20px] leading-[1.6] text-[color:var(--hueso)]">{c.lede}</p>
-              <p dangerouslySetInnerHTML={{ __html: c.antes }} />
-
-              <nav aria-label={t("enEsta")} className="mt-8 border-y border-[color:var(--veta)] py-5 lg:hidden">
-                <p className="mb-2 text-[13px] text-[color:var(--hueso-tenue)]">{t("enEsta")}</p>
-                <ol className="grid gap-1 text-[16px]">
-                  {items.map((i) => <li key={i.id}><a href={`#${i.id}`}>{i.toc}</a></li>)}
-                </ol>
-              </nav>
+              {c.antes && <p dangerouslySetInnerHTML={{ __html: c.antes }} />}
 
               {c.secciones.map((s) => {
                 const [antes, despues] = s.html.split("<!--figura-->");
-                const Figura = FIGURA[s.id];
+                const Figura = escenario ? FIGURA[s.id] : undefined;
                 return (
                   <section key={s.id} id={s.id} data-estado={s.estado ?? "rest"}>
                     <Html html={antes} />
@@ -78,25 +78,38 @@ export async function Articulo({ c, ficha }: { c: ArticuloContenido; ficha: Indi
                 );
               })}
 
-              <section id="montalo" data-estado="speak" aria-labelledby="montalo-h" className="diy-montalo">
-                <h2 id="montalo-h">{t("montalo.titulo")}</h2>
-                <p>{ti("cuerpo")}</p>
-                <Comando texto={INSTALL} copiar={ti("copiar")} copiado={ti("copiado")} />
-                <p className="requisitos">{ti("requisitos")}: {ti("linux")} {ti("openclaw")}</p>
-                <h3 className="puertas-h">{t("montalo.puertas")}</h3>
-                <ul className="puertas">
-                  {puertas.map((p) => (
-                    <li key={p.href}><a href={p.href} rel="noopener">{p.label}<span aria-hidden="true">→</span></a></li>
-                  ))}
-                </ul>
-              </section>
+              {meta.instalar && (
+                <section id="montalo" data-estado="speak" aria-labelledby="montalo-h" className="diy-montalo">
+                  <h2 id="montalo-h">{t("montalo.titulo")}</h2>
+                  <p>{ti("cuerpo")}</p>
+                  <Comando texto={INSTALL} copiar={ti("copiar")} copiado={ti("copiado")} />
+                  <p className="requisitos">{ti("requisitos")}: {ti("linux")} {ti("openclaw")}</p>
+                  <h3 className="puertas-h">{t("montalo.puertas")}</h3>
+                  <ul className="puertas">
+                    {puertas.map((p) => (
+                      <li key={p.href}><a href={p.href} rel="noopener">{p.label}<span aria-hidden="true">→</span></a></li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
-              <p className="mt-12">{t.rich("queEs", { enlace: (txt) => <Link href="/">{txt}</Link> })}</p>
+              {meta.tema === "fogar" && <p className="mt-12">{t.rich("queEs", { enlace: (txt) => <Link href="/">{txt}</Link> })}</p>}
 
-              <details className="diy-registro">
+              {relacionados.length > 0 && (
+                <section aria-labelledby="sigue-h" className="diy-sigue">
+                  <h2 id="sigue-h">{t("sigue")}</h2>
+                  <ul className="puertas">
+                    {relacionados.map((r) => (
+                      <li key={r.meta.slug}><Link href={`/diy/${r.meta.slug}`}>{r.c.h1}<span aria-hidden="true">→</span></Link></li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              <details className="diy-registro diy-desplegable">
                 <summary className="f-foco">{t("registro")}</summary>
                 <ul>
-                  {c.registro.map(([iso, fecha, texto]) => <li key={iso}><time dateTime={iso}>{fecha}</time> · {texto}</li>)}
+                  {c.registro.map(([iso, texto]) => <li key={iso}><time dateTime={iso}>{fechaLarga(locale, iso)}</time> · {texto}</li>)}
                 </ul>
               </details>
 

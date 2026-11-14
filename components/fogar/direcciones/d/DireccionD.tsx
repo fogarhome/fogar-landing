@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import ScrollSequence from "@/components/fogar/ScrollSequence";
 import { Anclado, letra } from "@/components/fogar/escena/Escena";
 import { useTranslations } from "next-intl";
@@ -27,7 +27,7 @@ const FIJO = "(prefers-reduced-motion: reduce), (max-width: 767px), (pointer: co
 const foco = "focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[color:var(--hueso)] focus-visible:shadow-[0_0_0_7px_var(--noche)]";
 const h2 = "font-display leading-[1.06] tracking-[-0.035em] text-[color:var(--hueso)]";
 const cuerpo = "text-[color:var(--hueso)]";
-const img = (f: number, ancho = 1280) => `/lab/secuencia/v6/${ancho}/f_${String(f).padStart(3, "0")}.avif`;
+const img = (f: number, ancho = 1280) => `/media/secuencia/v6/${ancho}/f_${String(f).padStart(3, "0")}.avif`;
 const TEMPERATURA = 21;
 export const TINTA = { paleta: { ascua: "#9c8f7b", llama: "#e6d9c2", chispa: "#fffaf0", contra: "#cfe6d6", hueso: "#ece6dc" }, halo: 1.6, humo: "#e9e0d0" };
 
@@ -48,6 +48,7 @@ const CSS = `
 .d-luz.on{transition-duration:.12s}
 .d-placa,.d-placa-e{padding:14px 16px;margin:-14px -16px;border-radius:18px}
 .d-placa{background:rgb(11 16 18/.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.d-placa-nav{padding:6px 12px;background:rgb(11 16 18/.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:999px}
 .d-hero-foto{width:max(100cqw,76cqh * 16 / 9)}
 .d-hero-sombra{background:linear-gradient(to bottom,rgb(11 16 18/0) 42%,rgb(11 16 18/.55) 58%,rgb(11 16 18/.86) 68%,var(--noche) 82%)}
 @container (min-aspect-ratio: 3/2){
@@ -58,7 +59,8 @@ const CSS = `
 @container (max-aspect-ratio: 8/5){.d-placa-e{background:rgb(11 16 18/.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}}
 `;
 
-function modoDe() { return new URLSearchParams(location.search).has("fijo") || matchMedia(FIJO).matches ? "fijo" : "escena"; }
+// Con «ahorro de datos» tampoco hay escena: evita descargar los 283 fotogramas.
+function modoDe() { return new URLSearchParams(location.search).has("fijo") || matchMedia(FIJO).matches || (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData ? "fijo" : "escena"; }
 
 /** Fogar TV quieta sobre la pantalla de la foto, para el modo fijo. */
 function TeleFija({ textos }: { textos: TextosTele }) {
@@ -129,7 +131,8 @@ export function DireccionD() {
   const lienzo = useRef<HTMLCanvasElement>(null);
   const tramo = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Antes de pintar: el HTML del servidor trae la portada fija y aquí se decide si pasa a la escena, sin parpadeo tras hidratar.
+  useLayoutEffect(() => {
     const mq = matchMedia(FIJO), pon = () => setModo(modoDe());
     pon();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- el ancho depende de la pantalla: solo se sabe en el navegador
@@ -176,7 +179,8 @@ export function DireccionD() {
     scrollTo({ top: el.getBoundingClientRect().top + scrollY + (ANCLA[e] / ALTO_VH) * (el.offsetHeight - innerHeight), behavior: "auto" });
   }
 
-  const fijo = modo === "fijo";
+  // Sin modo (HTML del servidor) se pinta como el fijo: así la portada llega con titular, botones y foto.
+  const fijo = modo !== "escena";
   const ctx = { fijo, estacion, bus, irA };
 
   const botonLampara = (
@@ -328,37 +332,43 @@ export function DireccionD() {
     </Capa>
   );
 
-  if (!modo) return <div className="min-h-screen bg-[color:var(--noche)]" />;
+  const hero = (
+    <>
+      {/* Portada a pantalla completa: la foto 16:9 entera, alta al 76 % de la pantalla y centrada en la tele; el texto, abajo. */}
+      <section id="d-portada" aria-labelledby="d-t-portada" className="relative h-[100svh] min-h-[540px] overflow-hidden [container-type:size]">
+        <div className="d-hero-foto absolute left-1/2 top-0 aspect-video -translate-x-1/2">
+          <img src={img(FIJA.portada)} alt="" fetchPriority="high" className="absolute inset-0 h-full w-full" />
+          {modo === "fijo" && <TeleFija textos={textosTele} />}
+        </div>
+        {/* Hueso sobre blanco con noche encima: α ≥ 0,5 da 3:1 (titular grande) y α ≥ 0,65, 4,5:1. El titular empieza pasado el 66 % de alto y el resto, pasado el 75 %. */}
+        {/* Apaisado (solo llega aquí con «reducir movimiento» o puntero táctil): degradado lateral y texto a la izquierda, sin tapar el fuego. */}
+        <div aria-hidden className="d-hero-sombra absolute inset-0" />
+        <div className="d-hero-texto absolute inset-x-0 bottom-0 mx-auto flex max-w-[1100px] flex-col gap-4 px-4 pb-[max(2rem,env(safe-area-inset-bottom))] md:px-8 md:pb-12">
+          <div className="w-36"><LineaViva tinta={TINTA} quieta label={t("lineaLabel")} /></div>
+          {portada}
+        </div>
+      </section>
+    </>
+  );
 
   if (fijo) {
     const bloque = "mx-auto flex max-w-[1100px] flex-col gap-5 px-4 md:px-8";
     return (
       <DCtx.Provider value={ctx}><div className="d-fijo bg-[color:var(--noche)] pb-24" style={{ "--s": "0.5px" } as CSSProperties}>
         <style>{CSS}</style>
-        {/* Portada a pantalla completa: la foto 16:9 entera, alta al 76 % de la pantalla y centrada en la tele; el texto, abajo. */}
-        <section id="d-portada" aria-labelledby="d-t-portada" className="relative h-[100svh] min-h-[540px] overflow-hidden [container-type:size]">
-          <div className="d-hero-foto absolute left-1/2 top-0 aspect-video -translate-x-1/2">
-            <img src={img(FIJA.portada)} alt="" fetchPriority="high" className="absolute inset-0 h-full w-full" />
-            <TeleFija textos={textosTele} />
-          </div>
-          {/* Hueso sobre blanco con noche encima: α ≥ 0,5 da 3:1 (titular grande) y α ≥ 0,65, 4,5:1. El titular empieza pasado el 66 % de alto y el resto, pasado el 75 %. */}
-          {/* Apaisado (solo llega aquí con «reducir movimiento» o puntero táctil): degradado lateral y texto a la izquierda, sin tapar el fuego. */}
-          <div aria-hidden className="d-hero-sombra absolute inset-0" />
-          <div className="d-hero-texto absolute inset-x-0 bottom-0 mx-auto flex max-w-[1100px] flex-col gap-4 px-4 pb-[max(2rem,env(safe-area-inset-bottom))] md:px-8 md:pb-12">
-            <div className="w-36"><LineaViva tinta={TINTA} quieta label={t("lineaLabel")} /></div>
-            {portada}
-          </div>
-        </section>
+        {hero}
+        {modo === "fijo" && <>
         <section id="d-gateway" aria-labelledby="d-t-gateway" className={`${bloque} pt-16`}>{gateway}</section>
         <section id="d-pared" aria-labelledby="d-t-pared" className={`${bloque} pt-12`}>{paredFijo}</section>
         <section id="d-voz" aria-labelledby="d-t-voz" className={`${bloque} pt-24`}>{voz}</section>
         <section id="d-balda" aria-labelledby="d-t-balda" className={`${bloque} pt-24`}>
           <div className="relative -mx-4 md:mx-0">
             <img src={img(FIJA.balda)} alt="" loading="lazy" className="block aspect-video w-full object-cover md:aspect-[21/9] md:rounded-3xl" />
-            <img src="/lab/secuencia/v6/1280/balda_lampara.webp" alt="" aria-hidden className={`d-luz absolute inset-0 h-full w-full object-cover md:rounded-3xl ${lampara ? "on opacity-100" : "opacity-0"}`} />
+            <img src="/media/secuencia/v6/1280/balda_lampara.webp" alt="" aria-hidden className={`d-luz absolute inset-0 h-full w-full object-cover md:rounded-3xl ${lampara ? "on opacity-100" : "opacity-0"}`} />
           </div>
           {balda}
         </section>
+        </>}
       </div></DCtx.Provider>
     );
   }
@@ -371,7 +381,7 @@ export function DireccionD() {
           <img src={img(0, ancho)} alt="" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
           <ScrollSequence scrollId="seq-scroll" count={N} src={src} onPaint={onPaint} mapa={fotogramaDe} />
           <canvas ref={lienzo} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full opacity-0 transition-opacity duration-700" />
-          <img src={`/lab/secuencia/v6/${ancho}/balda_lampara.webp`} alt="" aria-hidden loading="lazy" className={`d-luz pointer-events-none absolute inset-0 h-full w-full object-cover ${lampara && estacion === "balda" ? "on opacity-100" : "opacity-0"}`} />
+          <img src={`/media/secuencia/v6/${ancho}/balda_lampara.webp`} alt="" aria-hidden loading="lazy" className={`d-luz pointer-events-none absolute inset-0 h-full w-full object-cover ${lampara && estacion === "balda" ? "on opacity-100" : "opacity-0"}`} />
           <div className="absolute top-3 z-10" style={{ left: "max(8px, calc(50% + (180 - 960) * max(100cqw / 1920, 100cqh / 1080) - 16px))" }}>
             <button type="button" aria-pressed={pausa} onClick={() => setPausa((v) => !v)} className={`d-boton min-h-11 rounded-full px-4 text-[14px] font-medium text-[color:var(--hueso)] opacity-70 hover:opacity-100 focus-visible:opacity-100 ${foco} ${pausa ? "bg-[color:var(--noche)] opacity-100" : ""}`}>
               {t("pausa")}
@@ -381,11 +391,19 @@ export function DireccionD() {
             <ol className="flex flex-col">
               {NAV.map(([e, nombre]) => (
                 <li key={e}>
-                  <a href={`#d-${e}`} aria-label={nombre} aria-current={estacion === e ? "step" : undefined} onClick={(ev) => { ev.preventDefault(); irA(e); }} className={`group flex h-11 w-11 items-center justify-end rounded-full ${foco}`}>
-                    <span className={`block h-px bg-[color:var(--hueso)] transition-[width,opacity] duration-300 ease-out ${estacion === e ? "w-7 opacity-100" : "w-3 opacity-50 group-hover:w-5 group-hover:opacity-100"}`} />
+                  {/* El nombre es el texto del enlace: invisible hasta pasar el ratón (solo con hover real) o tener el foco. */}
+                  <a href={`#d-${e}`} aria-current={estacion === e ? "step" : undefined} onClick={(ev) => { ev.preventDefault(); irA(e); }} className={`group relative flex h-11 w-11 items-center justify-end rounded-full ${foco}`}>
+                    <span className="d-placa-nav pointer-events-none absolute right-full mr-1 whitespace-nowrap text-[14px] font-medium text-[color:var(--hueso)] opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">{nombre}</span>
+                    <span className={`block h-0.5 rounded-full bg-[color:var(--hueso)] shadow-[0_0_0_1px_rgb(11_16_18/.35)] transition-[width,opacity] duration-300 ease-out motion-reduce:transition-none ${estacion === e ? "w-7 opacity-100" : "w-3 opacity-80 group-hover:w-5 group-hover:opacity-100"}`} />
                   </a>
                 </li>
               ))}
+              {/* Salida de la escena con ratón: va al bloque de instalar, debajo del recorrido. */}
+              <li className="mt-2 flex justify-end">
+                <a href="#instala-t" className={`d-placa-nav inline-flex min-h-11 items-center gap-1 rounded-full text-[14px] font-medium text-[color:var(--hueso)] hover:bg-[color:var(--noche)] ${foco}`}>
+                  {t("navInstala")} <span aria-hidden>↓</span>
+                </a>
+              </li>
             </ol>
           </nav>
           {portada}{gateway}{voz}{balda}{pared}{cierre}

@@ -12,13 +12,13 @@ type Pieza = "cliente" | "gateway" | "transcripcion" | "orquestador" | "sintesis
 
 const PIEZAS: Pieza[] = ["cliente", "gateway", "transcripcion", "orquestador", "sintesis"];
 /* Qué piezas enciende cada parte del texto. Solo se asigna una pieza donde el texto la nombra; «Por qué está separado
-   así», «Dónde corre», «Home Assistant» y «Limitaciones» hablan del conjunto y encienden todas. Siguientes y Móntalo, ninguna. */
+   así», «Dónde corre», «Home Assistant» y «Limitaciones» hablan del conjunto y encienden todas. Móntalo, ninguna. */
 const MAPA: Record<string, Pieza[]> = {
   resumen: PIEZAS, recorrido: ["cliente"],
   "paso-1": ["cliente"], "paso-2": ["gateway"], "paso-3": ["transcripcion"], "paso-4": ["orquestador"], "paso-5": ["sintesis", "cliente"],
   cortar: ["cliente", "gateway"], "fogar-voice": ["cliente"], tele: ["cliente"],
   abierto: PIEZAS, "por-que": PIEZAS, casa: PIEZAS, "home-assistant": PIEZAS, limites: PIEZAS,
-  siguientes: [], montalo: [],
+  montalo: [],
 };
 // el recorrido de «Reproducir»: los nodos de Hilo (messages hilo.nodos), con su pieza y el estado de la línea
 const RECORRIDO: { p: Pieza[]; e: EstadoLinea }[] = [
@@ -51,10 +51,11 @@ const cablesDe = (on: Pieza[]) => {
 };
 
 /**
- * Artículo con escenario: desde 1024 px, columna sticky con la línea viva, el mapa de las cinco piezas (se encienden con
- * la parte que se lee), «Reproducir el recorrido» y el índice. Por debajo, una tira sticky con la pieza activa.
+ * Columna de lectura con índice lateral que marca la sección que se lee; por debajo de 1024 px, un botón fijo lo abre.
+ * Con `mapa` (plantilla «escenario», ecosistema Fogar): además la línea viva, el mapa de las cinco piezas (se encienden
+ * con la parte que se lee), «Reproducir el recorrido» y, en móvil, una tira sticky con la pieza activa.
  */
-export function Escenario({ items, children }: { items: Item[]; children: ReactNode }) {
+export function Escenario({ items, mapa = true, children }: { items: Item[]; mapa?: boolean; children: ReactNode }) {
   const t = useTranslations("diy.articulo");
   const nodos = t.raw("hilo.nodos") as Nodo[];
   const nombre: Record<Pieza, string> = { cliente: nodos[0].n, gateway: nodos[1].n, transcripcion: nodos[2].n, orquestador: nodos[3].n, sintesis: nodos[4].n };
@@ -64,6 +65,8 @@ export function Escenario({ items, children }: { items: Item[]; children: ReactN
   const [estado, setEstado] = useState<EstadoLinea>("rest");
   const [paso, setPaso] = useState(-1); // reproduciendo: índice en RECORRIDO
   const [fin, setFin] = useState("");
+  const [abierto, setAbierto] = useState(false);
+  const dialogo = useRef<HTMLDialogElement>(null);
   const orbe = useRef<HTMLSpanElement>(null);
   const antes = useRef<Pieza | null>(null);
   const sync = useRef<() => void>(() => {});
@@ -76,9 +79,9 @@ export function Escenario({ items, children }: { items: Item[]; children: ReactN
   // lectura: manda la última parte cuyo inicio ha pasado la línea de lectura (40 % de la ventana)
   useEffect(() => {
     const ids = items.map((i) => i.id);
-    const partes = [...document.querySelectorAll<HTMLElement>("#texto [id]")].filter((el) => el.id in MAPA);
+    const partes = [...document.querySelectorAll<HTMLElement>(".diy-prosa [id]")].filter((el) => el.id in MAPA);
     const secciones = ids.map((id) => document.getElementById(id)).filter((s): s is HTMLElement => !!s);
-    const marcas = [...document.querySelectorAll<HTMLElement>("#texto [data-estado]")];
+    const marcas = [...document.querySelectorAll<HTMLElement>(".diy-prosa [data-estado]")];
     const ultima = <T extends HTMLElement>(els: T[], linea: number) => {
       let r: T | undefined;
       for (const el of els) { if (el.getBoundingClientRect().top <= linea) r = el; else break; }
@@ -146,12 +149,21 @@ export function Escenario({ items, children }: { items: Item[]; children: ReactN
   const jugando = paso >= 0;
   const linea: EstadoLinea = jugando ? RECORRIDO[paso].e : estado;
   const voz = jugando ? t("escenario.paso", { n: paso + 1, total: RECORRIDO.length, pieza: nodos[paso].n, ahora: nodos[paso].ahora }) : fin;
-  const conPiezas = on.length > 0;
+  const conPiezas = mapa && on.length > 0;
+  const toc = (
+    <ol>
+      {items.map((i) => (
+        <li key={i.id}>
+          <a href={`#${i.id}`} aria-current={actual === i.id ? "true" : undefined} className="f-foco">{i.toc}</a>
+        </li>
+      ))}
+    </ol>
+  );
 
   return (
     <div className="diy-articulo f-ancho pb-24 pt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16 xl:gap-20" data-piezas={conPiezas ? "" : undefined}>
       {/* tira móvil: alto 0 para no empujar el texto; la barra cuelga por encima */}
-      <div className="diy-tira lg:hidden" aria-hidden="true">
+      {mapa && <div className="diy-tira lg:hidden" aria-hidden="true">
         <div className="barra">
           <div className="w-[64px] shrink-0"><LineaViva estado={linea} tinta={TINTA} label="" /></div>
           <svg viewBox="0 0 76 26" className="mini" aria-hidden="true">
@@ -163,12 +175,28 @@ export function Escenario({ items, children }: { items: Item[]; children: ReactN
           </svg>
           <p className="nombre">{on.length === PIEZAS.length ? items.find((i) => i.id === actual)?.toc : on.map((p) => nombre[p]).join(" · ")}</p>
         </div>
-      </div>
+      </div>}
 
       {children}
 
+      {/* índice en móvil: <dialog> modal da Escape, el foco atrapado y la vuelta del foco al botón */}
+      <button type="button" className="diy-indice-boton f-foco lg:hidden" aria-haspopup="dialog" aria-expanded={abierto} aria-controls="diy-indice-movil"
+        onClick={() => { dialogo.current?.showModal(); setAbierto(true); }}>
+        <span className="icono" aria-hidden="true" />{t("abrirIndice")}
+      </button>
+      <dialog id="diy-indice-movil" ref={dialogo} aria-label={t("enEsta")} className="diy-indice-movil" onClose={() => setAbierto(false)}
+        // cierra al pulsar fuera de la hoja o un enlace (si no, quedaría abierto encima de la sección)
+        onClick={(e) => { if (e.target === e.currentTarget || (e.target as HTMLElement).closest("a")) e.currentTarget.close(); }}>
+        <div className="cabeza">
+          <p>{t("enEsta")}</p>
+          <button type="button" className="f-foco" onClick={() => dialogo.current?.close()}>{t("cerrar")}</button>
+        </div>
+        <nav aria-label={t("enEsta")} className="toc">{toc}</nav>
+      </dialog>
+
       <aside className="hidden lg:block">
         <div className="diy-escenario">
+          {mapa && <>
           <div className="linea"><LineaViva estado={linea} tinta={TINTA} label="" /></div>
 
           <div className="mapa" aria-hidden="true">
@@ -197,16 +225,9 @@ export function Escenario({ items, children }: { items: Item[]; children: ReactN
             <span className="icono" aria-hidden="true" />{t("escenario.reproducir")}
           </button>
           <p className="sr-only" aria-live="polite">{voz}</p>
+          </>}
 
-          <nav aria-label={t("enEsta")} className="toc">
-            <ol>
-              {items.map((i) => (
-                <li key={i.id}>
-                  <a href={`#${i.id}`} aria-current={actual === i.id ? "true" : undefined} className="f-foco">{i.toc}</a>
-                </li>
-              ))}
-            </ol>
-          </nav>
+          <nav aria-label={t("enEsta")} className="toc">{toc}</nav>
         </div>
       </aside>
     </div>

@@ -1,4 +1,7 @@
-import { getTranslations } from "next-intl/server";
+"use client";
+
+// Cliente para salir en el idioma correcto también dentro del 404 (ver NoEncontrada).
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { CONTACT_EMAIL } from "@/lib/contact";
 import { GITHUB_ORG } from "@/lib/github";
@@ -10,8 +13,8 @@ import { Logo } from "./Logo";
  * Pie común. Decidido por Sito (plan JLD 2026-11-13, §5): sin lista de espera ni línea de equipo, solo enlaces;
  * el correo se queda el actual (lib/contact.ts) y cambia al final de la migración.
  */
-export async function Pie() {
-  const t = await getTranslations("sitio");
+export function Pie({ idiomaHref }: { idiomaHref?: string } = {}) {
+  const t = useTranslations("sitio");
   return (
     <footer id="contacto" className="border-t border-[color:var(--veta)]">
       <div className="f-ancho grid gap-12 py-16 md:grid-cols-[1fr_auto] md:gap-24">
@@ -35,7 +38,7 @@ export async function Pie() {
       </div>
       <div className="f-ancho flex items-center justify-between gap-6 border-t border-[color:var(--veta)] py-5 text-[13px] text-[color:var(--hueso-tenue)]">
         <p>© {new Date().getFullYear()} Fogar</p>
-        <Idioma />
+        <Idioma href={idiomaHref} />
       </div>
     </footer>
   );

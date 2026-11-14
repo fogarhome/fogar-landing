@@ -2,7 +2,7 @@
   "tv": {
     "saltar": "Saltar el recorrido",
     "meta": {
-      "title": "Fogar TV — Le hablas. La tele se encarga.",
+      "title": "Fogar TV: tu tele, la pantalla del asistente de voz",
       "description": "Fogar TV convierte la tele que ya tienes en la pantalla de Fogar: contesta sin tapar lo que ves, el mando es tu móvil y es un ecosistema abierto: puedes conectar lo tuyo."
     },
     "s1": {
@@ -79,9 +79,11 @@
     "s8": {
       "headline": "No es una idea. Ya funciona.",
       "line": "Funciona hoy en nuestro salón.",
+      "setUp": "Móntala en tu tele",
       "ctaTalk": "Hablemos",
       "back": "Volver al inicio",
-      "code": "Código en GitHub"
+      "code": "Código en GitHub",
+      "diy": "Más en el DIY"
     },
     "chat": {
       "series1You": "Fogar, ¿dónde se rodó esto?",
