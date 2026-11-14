@@ -1,7 +1,7 @@
 {
   "home": {
     "meta": {
-      "title": "Fogar",
+      "title": "Fogar — open-source AI voice assistant for your home",
       "description": "An AI ecosystem for your home: voice, a gateway that connects your clients and your smart home, and open source code."
     },
     "d": {
@@ -9,8 +9,9 @@
         "The fire",
         "of your home"
       ],
-      "portada": "A compatible screen or speaker can be a client.",
-      "instalalo": "Install it",
+      "portada": "An AI voice assistant for your home, built from open parts you choose.",
+      "instalalo": "Install the gateway",
+      "navInstala": "Install it",
       "verTv": "Fogar TV",
       "gatewayH2": [
         "A program",
@@ -54,7 +55,7 @@
         ]
       ],
       "tuHerramienta": "Your tool",
-      "nota": "Fogar TV and the voice client (macOS, Android and Linux) already work. The web panel will be the main interface.",
+      "nota": "Fogar TV and the voice client (macOS only, for now) already work. The web panel will be the main interface.",
       "recorrido": "A walk through a living room: a stone fireplace with a fire and a TV above it, a speaker, an oak shelf with a lamp, a radio, a clock and a notebook, and a plain wall.",
       "teleSr": "The TV shows Fogar TV: the time, the date, a timer and what's playing. A line of light writes “Fogar” and follows the walk.",
       "lineaLabel": "Fogar's living line",
@@ -65,12 +66,14 @@
     },
     "resto": {
       "instala": {
-        "titulo": "Install it",
-        "lead": "One step, on a machine of your own:",
+        "titulo": "Install the gateway",
+        "lead": "One command, on a Linux machine of your own:",
+        "que": "It downloads the Fogar gateway (fogar-gw) from its GitHub releases, installs it and starts onboarding.",
         "copiar": "Copy",
         "copiado": "Copied",
-        "requisitos": "It needs Linux with user systemd and OpenClaw 2026.6.11 or later, on the same machine or over an SSH tunnel.",
-        "diy": "Step by step in DIY",
+        "requisitos": "It needs Linux with user systemd and <openclaw>OpenClaw</openclaw> 2026.6.11 or later, on the same machine or over an SSH tunnel.",
+        "despues": "Then: connect your first client (<tv>Fogar TV</tv> or the <voz>voice client</voz>).",
+        "diy": "What we've built, in DIY",
         "como": "How it's made",
         "terminal": "Terminal"
       },
@@ -114,8 +117,8 @@
         "titulo": "Where to go next",
         "items": [
           [
-            "Install it on your machine",
-            "The DIY entries: what was built, with which versions and how."
+            "Install the gateway",
+            "One command on a Linux machine of your own. Then connect your first client."
           ],
           [
             "See Fogar TV",
@@ -153,7 +156,7 @@
           ],
           [
             "Voice client",
-            "macOS and Android",
+            "macOS, for now",
             "hoy"
           ],
           [
@@ -228,6 +231,10 @@
       "copiar": "Copy address",
       "copiada": "Copied",
       "mapa": "Site map"
+    },
+    "noEncontrada": {
+      "titulo": "This page doesn't exist",
+      "texto": "The address may be mistyped, or the page moved. These ones do exist:"
     }
   },
   "tele": {

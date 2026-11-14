@@ -34,7 +34,7 @@ export async function Mando() {
           <svg width="20" height="20" viewBox="0 0 24 24" {...TRAZO}><rect x="2.5" y="6" width="19" height="12" rx="3" /><path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M8 14h8" /></svg>
           {t("remote.type")}
         </div>
-        <div className="tv-zona-4 mt-3 flex items-center justify-between rounded-full bg-[color:var(--hueso)] px-5 py-3 font-medium text-[color:var(--noche)]">
+        <div className="tv-zona-4 mt-3 flex items-center justify-between rounded-full border border-[color:var(--veta)] bg-[color:var(--piedra-alta)] px-5 py-3 font-medium text-[color:var(--hueso)]">
           {t("remote.talk")}
           <svg width="20" height="20" viewBox="0 0 24 24" {...TRAZO}><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
         </div>

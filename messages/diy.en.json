@@ -6,11 +6,11 @@
     "portada": {"titulo": "From the DIY", "lead": "Technical notes and guides to build it yourself. Every entry says what was tested.", "leer": "Read", "todo": "See all DIY"},
     "indice": {
       "seccion": "DIY",
-      "h1": "Fogar, inside out and in your home",
-      "lede": "How Fogar is built and how to put it together with open-source pieces. Every entry says what was tested and with which versions.",
+      "h1": "Projects to build at home",
+      "lede": "Electronics, voice, home automation and AI orchestrators, built from open-source pieces. We've tested everything at home, and every article says with which versions.",
       "instala": {
-        "titulo": "Install it in one step",
-        "cuerpo": "Paste this into a terminal on the machine where Fogar will live.",
+        "titulo": "Install the Fogar gateway",
+        "cuerpo": "On a Linux machine of your own, paste this into a terminal: it downloads the gateway (fogar-gw) from its GitHub releases, installs it and starts onboarding. Fogar TV and the voice client connect afterwards.",
         "copiar": "Copy",
         "copiado": "Copied",
         "requisitos": "You need",
@@ -26,17 +26,20 @@
       "leer": "Read the entry",
       "filas": {
         "estado": "Status",
-        "dificultad": "Difficulty",
-        "lectura": "Reading time",
         "montar": "To set up",
-        "probado": "Tested with"
-      }
+        "probado": "Tested with",
+        "tema": "Topic"
+      },
+      "meta": {
+        "title": "DIY: voice, smart home and electronics, open source",
+        "description": "Electronics, voice, home automation and AI orchestrator projects built from open-source pieces. Every article says what we tested at home and with which versions."
+      },
+      "mas": "More articles"
     },
     "articulo": {
       "enEsta": "In this entry",
       "probadoCon": "Tested with",
       "piezasMas": "{n, plural, one {and # more piece} other {and # more pieces}}",
-      "dificultad": "Difficulty",
       "registro": "Changelog",
       "queEs": "To get to know the product, see <enlace>what Fogar is and what it can do</enlace>.",
       "volver": "All DIY entries",
@@ -55,7 +58,7 @@
         ]
       },
       "escenario": {"reproducir": "Play the path", "paso": "Step {n} of {total}: {pieza}, {ahora}", "fin": "Path finished"},
-      "montalo": {"titulo": "Set it up", "puertas": "Where to go next", "readme": "fogar-gateway README", "protocolo": "Client protocol", "wake": "fogar-wake-trainer"},
+      "montalo": {"titulo": "Set it up", "puertas": "Where to go next", "readme": "fogar-gateway README", "protocolo": "Client protocol", "wake": "fogar-wake-trainer", "voice": "fogar-voice README"},
       "casa": {
         "titulo": "What runs on your machines and what goes out",
         "red": "Your network",
@@ -68,7 +71,38 @@
           { "n": "Cloud model", "sale": "The cloud model receives what you say, already turned into text." },
           { "n": "Tunnel or proxy", "sale": "Your audio goes through the tunnel or proxy when you use Fogar away from home." }
         ]
-      }
-    }
+      },
+      "actualizado": "Updated {fecha}",
+      "migas": "Breadcrumb",
+      "sigue": "Keep reading",
+      "abrirIndice": "Contents",
+      "cerrar": "Close"
+    },
+    "tipos": {
+      "nota": "Technical note",
+      "guia": "Guide"
+    },
+    "temas": {
+      "fogar": "Inside Fogar",
+      "voz": "Voice and audio",
+      "electronica": "Electronics and sensors",
+      "orquestadores": "Orchestrators and AI",
+      "domotica": "Home automation (Home Assistant)",
+      "pantallas": "Screens and TV"
+    },
+    "estados": {
+      "estable": "Stable",
+      "pruebas": "In testing",
+      "experimental": "Experimental"
+    },
+    "dificultades": {
+      "1": "Easy",
+      "2": "Medium",
+      "3": "Hard"
+    },
+    "autores": {
+      "equipo": "Fogar team"
+    },
+    "minutos": "{n} min"
   }
 }

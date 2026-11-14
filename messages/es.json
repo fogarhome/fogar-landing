@@ -1,7 +1,7 @@
 {
   "home": {
     "meta": {
-      "title": "Fogar",
+      "title": "Fogar: asistente de voz con IA para tu casa, código abierto",
       "description": "Un ecosistema de inteligencia artificial para tu casa: voz, un gateway que une tus clientes y tu domótica, y código abierto."
     },
     "d": {
@@ -9,8 +9,9 @@
         "El fuego",
         "de tu casa"
       ],
-      "portada": "Una pantalla o un altavoz compatibles pueden ser clientes.",
-      "instalalo": "Instálalo",
+      "portada": "Un asistente de voz con IA para tu casa, montado con piezas abiertas que eliges tú.",
+      "instalalo": "Instala el gateway",
+      "navInstala": "Instálalo",
       "verTv": "Fogar TV",
       "gatewayH2": [
         "Un programa",
@@ -54,7 +55,7 @@
         ]
       ],
       "tuHerramienta": "Tu herramienta",
-      "nota": "Fogar TV y el cliente de voz (macOS, Android y Linux) ya funcionan. El panel web será la interfaz principal.",
+      "nota": "Fogar TV y el cliente de voz (por ahora, solo en macOS) ya funcionan. El panel web será la interfaz principal.",
       "recorrido": "Recorrido por un salón: chimenea de piedra con lumbre y una tele encima, un altavoz, una balda de roble con lámpara, radio, reloj y libreta, y una pared lisa.",
       "teleSr": "La tele muestra Fogar TV: la hora, la fecha, un temporizador y lo que suena. Una línea de luz escribe «Fogar» y acompaña el recorrido.",
       "lineaLabel": "La línea viva de Fogar",
@@ -65,12 +66,14 @@
     },
     "resto": {
       "instala": {
-        "titulo": "Instálalo",
-        "lead": "Un paso, en una máquina tuya:",
+        "titulo": "Instala el gateway",
+        "lead": "Un comando, en una máquina tuya con Linux:",
+        "que": "Descarga el gateway de Fogar (fogar-gw) de sus releases en GitHub, lo instala y lanza el onboarding.",
         "copiar": "Copiar",
         "copiado": "Copiado",
-        "requisitos": "Pide Linux con systemd de usuario y OpenClaw 2026.6.11 o posterior, en el mismo equipo o por túnel SSH.",
-        "diy": "Paso a paso en DIY",
+        "requisitos": "Pide Linux con systemd de usuario y <openclaw>OpenClaw</openclaw> 2026.6.11 o posterior, en el mismo equipo o por túnel SSH.",
+        "despues": "Después: conecta tu primer cliente (<tv>Fogar TV</tv> o el <voz>cliente de voz</voz>).",
+        "diy": "Lo que hemos montado, en DIY",
         "como": "Cómo está hecho",
         "terminal": "Terminal"
       },
@@ -114,8 +117,8 @@
         "titulo": "Por dónde seguir",
         "items": [
           [
-            "Instálalo en tu máquina",
-            "Las entradas DIY: qué se montó, con qué versiones y cómo."
+            "Instala el gateway",
+            "Un comando en una máquina tuya con Linux. Después, conecta tu primer cliente."
           ],
           [
             "Mira Fogar TV",
@@ -153,7 +156,7 @@
           ],
           [
             "Cliente de voz",
-            "macOS y Android",
+            "macOS, por ahora",
             "hoy"
           ],
           [
@@ -228,6 +231,10 @@
       "copiar": "Copiar dirección",
       "copiada": "Copiada",
       "mapa": "Mapa del sitio"
+    },
+    "noEncontrada": {
+      "titulo": "Esta página no existe",
+      "texto": "Puede que la dirección esté mal escrita o que la página se haya movido. Estas sí existen:"
     }
   },
   "tele": {

@@ -8,6 +8,7 @@ import { Emparejar } from "@/components/fogar/tv/Emparejar";
 import { Montaje } from "@/components/fogar/tv/Montaje";
 import { MasCosas } from "@/components/fogar/tv/MasCosas";
 import { Final } from "@/components/fogar/tv/Final";
+import { paginaMetadata } from "@/lib/seo";
 import "@/components/fogar/tv/tv.css";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -15,13 +16,8 @@ type Props = { params: Promise<{ locale: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "tv.meta" });
-  const title = t("title");
-  const description = t("description");
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: "website", locale: locale === "es" ? "es_ES" : "en_US" },
-  };
+  // Sin «· Fogar»: el título ya empieza por Fogar TV.
+  return paginaMetadata({ locale, href: "/fogar-tv", title: t("title"), description: t("description"), absoluto: true });
 }
 
 export default async function FogarTvPage({ params }: Props) {

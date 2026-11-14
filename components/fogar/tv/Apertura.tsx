@@ -78,7 +78,7 @@ export function Apertura() {
       <div className="tv-escenario">
         <div ref={sala} className="tv-sala">
           {/* eslint-disable-next-line @next/next/no-img-element -- fotograma fijo de la secuencia, ya en AVIF a su tamaño */}
-          <img src="/lab/secuencia/v6/1920/f_000.avif" alt="" fetchPriority="high" className="absolute inset-0 h-full w-full" />
+          <img src="/media/secuencia/v6/1920/f_000.avif" alt="" fetchPriority="high" className="absolute inset-0 h-full w-full" />
           <div className="tv-velo" aria-hidden />
           <div className="absolute" style={pos}>
             <Pantalla controlRef={tele} label={t("s1.caption")} ancho={() => anchoTele.current} className="tv-sin-marco h-full" />

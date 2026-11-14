@@ -6,11 +6,11 @@
     "portada": {"titulo": "Del DIY", "lead": "Notas técnicas y guías para montarlo tú. Cada entrada dice qué se probó.", "leer": "Leer", "todo": "Ver todo el DIY"},
     "indice": {
       "seccion": "DIY",
-      "h1": "Fogar, por dentro y en tu casa",
-      "lede": "Cómo está hecho Fogar y cómo montarlo con piezas de código abierto. Cada entrada dice qué se probó y con qué versiones.",
+      "h1": "Proyectos para montar en casa",
+      "lede": "Electrónica, voz, domótica y orquestadores de IA, con piezas de código abierto. Todo lo hemos probado en casa y cada artículo dice con qué versiones.",
       "instala": {
-        "titulo": "Instálalo en un paso",
-        "cuerpo": "Pega esto en una terminal del equipo donde va a vivir Fogar.",
+        "titulo": "Instala el gateway de Fogar",
+        "cuerpo": "En una máquina tuya con Linux, pega esto en una terminal: descarga el gateway (fogar-gw) de sus releases en GitHub, lo instala y lanza el onboarding. Fogar TV y el cliente de voz se conectan después.",
         "copiar": "Copiar",
         "copiado": "Copiado",
         "requisitos": "Necesitas",
@@ -26,17 +26,20 @@
       "leer": "Leer la entrada",
       "filas": {
         "estado": "Estado",
-        "dificultad": "Dificultad",
-        "lectura": "Lectura",
         "montar": "Hay que montar",
-        "probado": "Probado con"
-      }
+        "probado": "Probado con",
+        "tema": "Tema"
+      },
+      "meta": {
+        "title": "DIY: voz, domótica y electrónica con código abierto",
+        "description": "Proyectos de electrónica, voz, domótica y orquestadores de IA con piezas de código abierto. Cada artículo dice qué se probó en casa y con qué versiones."
+      },
+      "mas": "Más artículos"
     },
     "articulo": {
       "enEsta": "En esta entrada",
       "probadoCon": "Probado con",
       "piezasMas": "{n, plural, one {y # pieza más} other {y # piezas más}}",
-      "dificultad": "Dificultad",
       "registro": "Registro de cambios",
       "queEs": "Para conocer el producto, mira <enlace>qué es Fogar y qué puede hacer</enlace>.",
       "volver": "Todas las entradas de DIY",
@@ -55,7 +58,7 @@
         ]
       },
       "escenario": {"reproducir": "Reproducir el recorrido", "paso": "Paso {n} de {total}: {pieza}, {ahora}", "fin": "Recorrido terminado"},
-      "montalo": {"titulo": "Móntalo", "puertas": "Por dónde seguir", "readme": "README de fogar-gateway", "protocolo": "Protocolo del cliente", "wake": "fogar-wake-trainer"},
+      "montalo": {"titulo": "Móntalo", "puertas": "Por dónde seguir", "readme": "README de fogar-gateway", "protocolo": "Protocolo del cliente", "wake": "fogar-wake-trainer", "voice": "README de fogar-voice"},
       "casa": {
         "titulo": "Qué corre en tus máquinas y qué sale hacia fuera",
         "red": "Tu red",
@@ -68,7 +71,38 @@
           { "n": "Modelo en la nube", "sale": "El modelo en la nube recibe lo que dices, ya convertido en texto." },
           { "n": "Túnel o proxy", "sale": "Tu audio pasa por el túnel o el proxy cuando usas Fogar fuera de casa." }
         ]
-      }
-    }
+      },
+      "actualizado": "Actualizado el {fecha}",
+      "migas": "Ruta",
+      "sigue": "Sigue leyendo",
+      "abrirIndice": "Índice",
+      "cerrar": "Cerrar"
+    },
+    "tipos": {
+      "nota": "Nota técnica",
+      "guia": "Guía"
+    },
+    "temas": {
+      "fogar": "Fogar por dentro",
+      "voz": "Voz y audio",
+      "electronica": "Electrónica y sensores",
+      "orquestadores": "Orquestadores e IA",
+      "domotica": "Domótica (Home Assistant)",
+      "pantallas": "Pantallas y tele"
+    },
+    "estados": {
+      "estable": "Estable",
+      "pruebas": "En pruebas",
+      "experimental": "Experimental"
+    },
+    "dificultades": {
+      "1": "Dificultad baja",
+      "2": "Dificultad media",
+      "3": "Dificultad alta"
+    },
+    "autores": {
+      "equipo": "Equipo Fogar"
+    },
+    "minutos": "{n} min"
   }
 }

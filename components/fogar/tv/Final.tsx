@@ -49,7 +49,7 @@ export function Final() {
         <div className="tv-fin-escena">
           <div ref={sala} className="tv-sala tv-fin-sala">
             {/* eslint-disable-next-line @next/next/no-img-element -- el mismo fotograma de la portada, ya en caché */}
-            <img src="/lab/secuencia/v6/1920/f_000.avif" alt="" loading="lazy" className="absolute inset-0 h-full w-full" />
+            <img src="/media/secuencia/v6/1920/f_000.avif" alt="" loading="lazy" className="absolute inset-0 h-full w-full" />
             <div className="tv-noche" aria-hidden />
             <div className="absolute" style={pos}>
               <Pantalla label={t("s1.caption")} className="tv-sin-marco h-full" />
@@ -61,9 +61,13 @@ export function Final() {
         <h2 id="tv-t-s8" className="font-display text-[clamp(34px,5.4vw,68px)] leading-[1.04] tracking-[-0.035em] text-balance">{t("s8.headline")}</h2>
         <p className={sub}>{t("s8.line")}</p>
         <p className="mt-10 flex flex-wrap items-center gap-4">
-          <a href={`mailto:${CONTACT_EMAIL}`} className="f-boton f-boton-claro f-foco">{t("s8.ctaTalk")}</a>
+          <a href={`${REPOS.tv}#readme`} className="f-boton f-boton-claro f-foco">{t("s8.setUp")}</a>
           <a href={REPOS.tv} className="f-boton f-foco">{t("s8.code")}</a>
-          <Link href="/" className="f-enlace f-foco ml-2 inline-flex min-h-11 items-center text-[15px] text-[color:var(--hueso-suave)]">{t("s8.back")}</Link>
+        </p>
+        <p className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-1 text-[17px]">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="f-enlace f-foco inline-flex min-h-11 items-center">{t("s8.ctaTalk")}</a>
+          <Link href="/diy" className="f-enlace f-foco inline-flex min-h-11 items-center">{t("s8.diy")}</Link>
+          <Link href="/" className="f-enlace f-foco inline-flex min-h-11 items-center text-[15px] text-[color:var(--hueso-suave)]">{t("s8.back")}</Link>
         </p>
       </div></div>
     </section>

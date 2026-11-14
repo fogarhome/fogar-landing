@@ -1,13 +1,25 @@
-import type { Metadata } from "next";
-import { articuloEn } from "./articulo.en";
-import { articuloEs } from "./articulo.es";
-import { indiceEn } from "./indice.en";
-import { indiceEs } from "./indice.es";
+import en from "@/messages/diy.en.json";
+import es from "@/messages/diy.es.json";
+import { ARTICULOS, articuloDe, entradasDe, fechaCorta, idiomaDe, relacionadosDe } from "./registro";
 
-export const diyIndice = (locale: string) => (locale === "es" ? indiceEs : indiceEn);
-export const diyArticulo = (locale: string) => (locale === "es" ? articuloEs : articuloEn);
+export { fechaCorta, fechaLarga, plantillaDe, type Entrada, type Meta } from "./registro";
 
-/** title/description con openGraph: reemplaza el objeto entero del layout. */
-export function diyMetadata(locale: string, { title, description }: { title: string; description: string }): Metadata {
-  return { title, description, openGraph: { title, description, type: "website", locale: locale === "es" ? "es_ES" : "en_US" } };
-}
+export const diyEntradas = (locale: string) => entradasDe(ARTICULOS, locale);
+export const diySlugs = (locale: string) => diyEntradas(locale).map((e) => e.meta.slug);
+export const diyArticulo = (locale: string, slug: string) => articuloDe(ARTICULOS, locale, slug);
+export const diyRelacionados = (locale: string, slug: string) => relacionadosDe(ARTICULOS, locale, slug);
+
+/** Fichas en texto plano para quien no tiene getTranslations a mano (la portada del sitio las lee así). */
+export const diyIndice = (locale: string) => {
+  const m = idiomaDe(locale) === "es" ? es : en;
+  return {
+    entradas: diyEntradas(locale).map(({ meta, c }) => ({
+      slug: meta.slug,
+      titulo: c.h1,
+      resumen: c.meta.description,
+      tipo: m.diy.tipos[meta.tipo],
+      iso: meta.publicado,
+      fecha: fechaCorta(locale, meta.publicado),
+    })),
+  };
+};

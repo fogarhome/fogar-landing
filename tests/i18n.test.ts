@@ -10,7 +10,8 @@ describe("i18n routing", () => {
     expect(routing.defaultLocale).toBe("en");
   });
 
-  it("uses no URL prefix (cookie + Accept-Language negotiation only)", () => {
-    expect(routing.localePrefix).toBe("never");
+  it("serves one language per URL: English unprefixed, Spanish under /es, no detection", () => {
+    expect(routing.localePrefix).toBe("as-needed");
+    expect(routing.localeDetection).toBe(false);
   });
 });
