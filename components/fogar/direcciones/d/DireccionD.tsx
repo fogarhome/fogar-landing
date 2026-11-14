@@ -29,6 +29,8 @@ const h2 = "font-display leading-[1.06] tracking-[-0.035em] text-[color:var(--hu
 const cuerpo = "text-[color:var(--hueso)]";
 const img = (f: number, ancho = 1280) => `/media/secuencia/v6/${ancho}/f_${String(f).padStart(3, "0")}.avif`;
 const TEMPERATURA = 21;
+// Los fotogramas de cada ancla de la navegación (± 2): se descargan justo después del póster.
+const PRIORIDAD = Object.values(ANCLA).flatMap((v) => { const f = Math.round(fotogramaDe(v / ALTO_VH)); return [f - 2, f - 1, f, f + 1, f + 2]; });
 export const TINTA = { paleta: { ascua: "#9c8f7b", llama: "#e6d9c2", chispa: "#fffaf0", contra: "#cfe6d6", hueso: "#ece6dc" }, halo: 1.6, humo: "#e9e0d0" };
 
 const CSS = `
@@ -40,14 +42,18 @@ const CSS = `
 .on .d-e,.d-e.ya{opacity:1;transform:none;transition:opacity .5s cubic-bezier(.23,1,.32,1),transform .5s cubic-bezier(.23,1,.32,1);transition-delay:calc(var(--i,0) * 60ms + 120ms)}
 .d-obj{opacity:0;transform:translateY(6px);transition:opacity .16s ease-out,transform .16s ease-out}
 .d-obj.ya{opacity:1;transform:none;transition-duration:.5s;transition-timing-function:cubic-bezier(.23,1,.32,1)}
+.d-obj:focus-within{opacity:1;transform:none}
 .d-fijo .d-e,.d-fijo .d-obj{opacity:1;transform:none}
 .d-guia{position:absolute;width:1px;background:var(--hueso);opacity:.3}
 .d-boton{transition:background-color .2s ease-out,color .2s ease-out,border-color .2s ease-out,transform .12s ease-out}
 @media (prefers-reduced-motion:no-preference){.d-boton:active{transform:scale(.97)}}
 .d-luz{transition:opacity .3s cubic-bezier(.23,1,.32,1)}
 .d-luz.on{transition-duration:.12s}
-.d-placa,.d-placa-e{padding:14px 16px;margin:-14px -16px;border-radius:18px}
-.d-placa{background:rgb(11 16 18/.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+/* Placa: velo oscuro difuminado detrás del texto, sin caja ni bordes; la sombra del texto remata la lectura sobre la pared. */
+.d-placa,.d-placa-e{position:relative;isolation:isolate}
+.d-placa::before,.d-placa-e::before{content:"";position:absolute;inset:-56px -72px;z-index:-1;pointer-events:none;opacity:0;background:radial-gradient(closest-side,rgb(11 16 18/.72),rgb(11 16 18/.5) 55%,rgb(11 16 18/0))}
+.d-placa::before{opacity:1}
+.d-placa,.d-placa-e{text-shadow:0 1px 14px rgb(11 16 18/.55)}
 .d-placa-nav{padding:6px 12px;background:rgb(11 16 18/.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:999px}
 .d-hero-foto{width:max(100cqw,76cqh * 16 / 9)}
 .d-hero-sombra{background:linear-gradient(to bottom,rgb(11 16 18/0) 42%,rgb(11 16 18/.55) 58%,rgb(11 16 18/.86) 68%,var(--noche) 82%)}
@@ -56,7 +62,12 @@ const CSS = `
 .d-hero-sombra{background:linear-gradient(to right,rgb(11 16 18/.9) 0,rgb(11 16 18/.78) max(24%,300px),rgb(11 16 18/0) max(38%,400px))}
 .d-hero-texto{top:0;max-width:none;margin:0;justify-content:center;padding-left:max(32px,5cqw);padding-right:0;width:min(440px,34cqw)}
 }
-@container (max-aspect-ratio: 8/5){.d-placa-e{background:rgb(11 16 18/.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}}
+@container (max-aspect-ratio: 8/5){.d-placa-e::before{opacity:1}}
+/* Antes de saber el modo (HTML del servidor): si la pantalla va a ir en escena (lo contrario de FIJO), el texto de la portada
+   fija no se enseña, para que no aparezca a la izquierda y salte a la derecha al hidratar. Sigue en el HTML. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (min-aspect-ratio: 1501/1000) and (not (pointer: coarse)){
+.d-pre .d-hero-texto,.d-pre .d-hero-sombra{visibility:hidden}
+}
 `;
 
 // Con «ahorro de datos» tampoco hay escena: evita descargar los 283 fotogramas.
@@ -140,18 +151,27 @@ export function DireccionD() {
     mq.addEventListener("change", pon);
     try { if (localStorage.getItem("fogar-pausa") === "1") setPausa(true); } catch { /* sin almacenamiento, la pausa no se recuerda */ }
     const mueve = (e: PointerEvent) => { bus.mouse = [e.clientX / innerWidth, e.clientY / innerHeight]; };
+    addEventListener("pointermove", mueve, { passive: true });
+    (window as unknown as { __fogar: unknown }).__fogar = { bus, irA };
+    return () => { mq.removeEventListener("change", pon); removeEventListener("pointermove", mueve); };
+  }, [bus]);
+
+  // La estación sale del scroll, no del fotograma pintado: el texto, la nav y el foco no esperan a que decodifique la imagen.
+  useEffect(() => {
+    if (modo !== "escena") return;
     const scroll = () => {
       const el = tramo.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
       bus.v = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - innerHeight))) * ALTO_VH;
       setPaso(pasoBalda(bus.v));
+      const e = estacionDe(Math.round(fotogramaDe(bus.v / ALTO_VH)));
+      if (e !== bus.estacion) { bus.estacion = e; setEstacion(e); }
     };
-    addEventListener("pointermove", mueve, { passive: true });
+    scroll(); // si la página carga a mitad del recorrido
     addEventListener("scroll", scroll, { passive: true });
-    (window as unknown as { __fogar: unknown }).__fogar = { bus, irA };
-    return () => { mq.removeEventListener("change", pon); removeEventListener("pointermove", mueve); removeEventListener("scroll", scroll); };
-  }, [bus]);
+    return () => removeEventListener("scroll", scroll);
+  }, [modo, bus]);
 
   useEffect(() => { ponExtra(bus, "lampara", lampara ? 1 : 0); }, [bus, lampara]);
   useEffect(() => { ponExtra(bus, "pausa", pausa ? 1 : 0); try { localStorage.setItem("fogar-pausa", pausa ? "1" : "0"); } catch { /* igual */ } }, [bus, pausa]);
@@ -160,17 +180,18 @@ export function DireccionD() {
   useEffect(() => {
     if (modo !== "escena" || !lienzo.current) return;
     let quitar: (() => void) | undefined, vivo = true;
-    const arranca = () => import("./gl").then(
-      (m) => { if (vivo && lienzo.current) { quitar = m.default(lienzo.current, bus, textosTele); setGl(true); } },
-      (e) => console.warn("Sin capa WebGL:", e),
-    );
+    // El catch cubre también el montaje: sin WebGL (o contexto perdido) la escena sigue con el canvas 2D.
+    const arranca = () => import("./gl")
+      .then((m) => { if (vivo && lienzo.current) { quitar = m.default(lienzo.current, bus, textosTele); setGl(true); } })
+      .catch((e) => console.warn("Sin capa WebGL:", e));
     const ocioso = () => ("requestIdleCallback" in window ? requestIdleCallback(arranca, { timeout: 1200 }) : setTimeout(arranca, 200));
     if (document.readyState === "complete") ocioso(); else addEventListener("load", ocioso, { once: true });
     return () => { vivo = false; quitar?.(); setGl(false); };
   }, [modo, bus, textosTele]);
 
   const src = useMemo(() => (i: number) => img(i, ancho), [ancho]);
-  const onPaint = useMemo(() => (i: number, canvas: HTMLCanvasElement) => { const e = estacionDe(i); if (pinta(bus, i, canvas, e)) setEstacion(e); }, [bus]);
+  // La capa WebGL (pose de la línea, tele) sigue al fotograma pintado, pegada a la imagen.
+  const onPaint = useMemo(() => (i: number, canvas: HTMLCanvasElement) => pinta(bus, i, canvas), [bus]);
 
   /** Lleva el scroll a la parada de una estación (navegación y foco de teclado). */
   function irA(e: Estacion) {
@@ -354,7 +375,7 @@ export function DireccionD() {
   if (fijo) {
     const bloque = "mx-auto flex max-w-[1100px] flex-col gap-5 px-4 md:px-8";
     return (
-      <DCtx.Provider value={ctx}><div className="d-fijo bg-[color:var(--noche)] pb-24" style={{ "--s": "0.5px" } as CSSProperties}>
+      <DCtx.Provider value={ctx}><div className={`d-fijo bg-[color:var(--noche)] pb-24 ${modo ? "" : "d-pre"}`} style={{ "--s": "0.5px" } as CSSProperties}>
         <style>{CSS}</style>
         {hero}
         {modo === "fijo" && <>
@@ -379,7 +400,7 @@ export function DireccionD() {
       <div ref={tramo} id="seq-scroll" className="relative bg-[color:var(--noche)]" style={{ height: `${ALTO_VH}vh` }}>
         <div className="sticky top-0 h-screen w-full overflow-hidden [container-type:size]" data-gl={gl ? "1" : undefined}>
           <img src={img(0, ancho)} alt="" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
-          <ScrollSequence scrollId="seq-scroll" count={N} src={src} onPaint={onPaint} mapa={fotogramaDe} />
+          <ScrollSequence scrollId="seq-scroll" count={N} src={src} onPaint={onPaint} mapa={fotogramaDe} prioridad={PRIORIDAD} />
           <canvas ref={lienzo} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full opacity-0 transition-opacity duration-700" />
           <img src={`/media/secuencia/v6/${ancho}/balda_lampara.webp`} alt="" aria-hidden loading="lazy" className={`d-luz pointer-events-none absolute inset-0 h-full w-full object-cover ${lampara && estacion === "balda" ? "on opacity-100" : "opacity-0"}`} />
           <div className="absolute top-3 z-10" style={{ left: "max(8px, calc(50% + (180 - 960) * max(100cqw / 1920, 100cqh / 1080) - 16px))" }}>
@@ -394,7 +415,8 @@ export function DireccionD() {
                   {/* El nombre es el texto del enlace: invisible hasta pasar el ratón (solo con hover real) o tener el foco. */}
                   <a href={`#d-${e}`} aria-current={estacion === e ? "step" : undefined} onClick={(ev) => { ev.preventDefault(); irA(e); }} className={`group relative flex h-11 w-11 items-center justify-end rounded-full ${foco}`}>
                     <span className="d-placa-nav pointer-events-none absolute right-full mr-1 whitespace-nowrap text-[14px] font-medium text-[color:var(--hueso)] opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">{nombre}</span>
-                    <span className={`block h-0.5 rounded-full bg-[color:var(--hueso)] shadow-[0_0_0_1px_rgb(11_16_18/.35)] transition-[width,opacity] duration-300 ease-out motion-reduce:transition-none ${estacion === e ? "w-7 opacity-100" : "w-3 opacity-80 group-hover:w-5 group-hover:opacity-100"}`} />
+                    {/* Ancho fijo (28 px) y escala desde la derecha: 12 px inactiva, 20 px con el ratón. Aro oscuro para ≥ 3:1 sobre la piedra iluminada. */}
+                    <span className={`block h-0.5 w-7 origin-right rounded-full bg-[color:var(--hueso)] shadow-[0_0_0_1px_rgb(11_16_18/.6)] transition-transform duration-[250ms] ease-[cubic-bezier(.23,1,.32,1)] motion-reduce:transition-none ${estacion === e ? "scale-x-100" : "scale-x-[.43] group-hover:scale-x-[.71]"}`} />
                   </a>
                 </li>
               ))}

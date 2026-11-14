@@ -175,7 +175,11 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
   // ?medir conserva el búfer para leer los píxeles (medida de contraste).
   const medir = new URLSearchParams(location.search).has("medir");
   const renderer = new WebGLRenderer({ canvas: lienzo, antialias: false, alpha: false, powerPreference: "high-performance", preserveDrawingBuffer: medir });
-  const dpr = Math.min(devicePixelRatio, 2); // 2 y no 1,5: con 1,5 el filamento de la línea viva salía blando en pantallas retina; por encima de 2 el sombreador a pantalla completa ya no compensa
+  // En producción no se lee el estado de enlace de cada programa: esa lectura síncrona bloqueaba el primer cuadro (~60 ms).
+  renderer.debug.checkShaderErrors = process.env.NODE_ENV !== "production";
+  // 2 y no 1,5: con 1,5 el filamento de la línea viva salía blando en pantallas retina; por encima de 2 el sombreador a pantalla completa ya no compensa.
+  // Solo si el equipo no llega (ver «baja» más abajo) se cede a 1,5 y luego a 1.
+  let dpr = Math.min(devicePixelRatio, 2);
   renderer.setPixelRatio(dpr);
   renderer.autoClear = false;
   const tipo = renderer.extensions.has("EXT_color_buffer_float") || renderer.extensions.has("EXT_color_buffer_half_float") ? HalfFloatType : UnsignedByteType;
@@ -235,7 +239,7 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
   };
   const mFinal = pase(FRAG_FINAL, u);
 
-  let ancho = 1, alto = 1;
+  let ancho = 1, alto = 1, forzar = true;
   const vista: Vista = { x0: 0, y0: 0, x1: 1920, y1: 1080 };
   const resize = () => {
     ancho = lienzo.clientWidth; alto = lienzo.clientHeight;
@@ -252,6 +256,7 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
     // El humo se realimenta: hay que empezar de negro, o la basura de la memoria se queda para siempre.
     for (const h of [humoA, humoB]) { renderer.setRenderTarget(h); renderer.setClearColor(0x000000, 1); renderer.clear(); }
     renderer.setRenderTarget(null);
+    forzar = true;
   };
   resize();
   addEventListener("resize", resize);
@@ -263,17 +268,48 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
   let listo = false, tamFuente = 0, ultimoRaton = "", tRaton = -9, tVoz0 = -1, hablo = false;
   let cursor = 0, lamp = 0, tLamp = -9, cuadroTv = -1, tSim = 0;
 
-  renderer.setAnimationLoop(() => {
+  // Contador para comprobar en el navegador: window.__fogarGl = { cuadros pintados, dpr actual }.
+  const estado = { cuadros: 0, dpr };
+  (window as unknown as { __fogarGl: typeof estado }).__fogarGl = estado;
+  let tPrev = 0, t0 = -1, tActivo = -9, tTele = -9, dtTele = 0, pausaAntes: boolean | null = null, sumaInt = 0, nInt = 0;
+
+  // dpr adaptativo, solo hacia abajo y un escalón cada vez (Fill Rate, threejs-performance: el coste crece con el cuadrado
+  // del dpr). Nunca vuelve a subir en la sesión. El humo se reinicia al redimensionar (resize lo limpia).
+  const baja = () => { dpr = dpr > 1.5 ? 1.5 : 1; renderer.setPixelRatio(dpr); u.uDpr.value = estado.dpr = dpr; resize(); };
+
+  const cuadro = () => {
     timer.update();
-    const t = timer.getElapsed(), dtReal = Math.min(timer.getDelta(), 0.05);
+    const t = timer.getElapsed();
     if (!bus.canvas) return;
-    const quieto = (bus.extra?.pausa ?? 0) > 0, dt = quieto ? 0 : dtReal;
-    tSim += dt;
+    const quieto = (bus.extra?.pausa ?? 0) > 0;
     const f = bus.frame;
 
     // El fotograma: three reserva la textura con su tamaño, así que si cambia la fuente hay que soltarla antes.
     const tam = bus.canvas.width * 100000 + bus.canvas.height;
     if (tex.image !== bus.canvas || tam !== tamFuente) { tex.dispose(); tex.image = bus.canvas; tamFuente = tam; bus.dirty = true; }
+    const clave = bus.mouse.join();
+    if (clave !== ultimoRaton) { ultimoRaton = clave; tRaton = t; }
+    const enTele = f - pista.tele.f0 < pista.tele.q.length;
+    const cambio = bus.dirty || forzar || quieto !== pausaAntes || (bus.extra?.lampara ?? 0) !== lamp;
+
+    // Bajo demanda. En pausa todo está quieto: solo se pinta si cambia el fotograma, el tamaño o la lámpara, y el último
+    // cuadro se queda en el lienzo (tapa al vídeo 2D, así que debe seguir al scroll). Sin pausa, la línea respira, el
+    // filamento corre y el humo sube siempre (animación de diseño): en reposo (sin scroll, ratón ni conversación de la tele
+    // en 1,5 s) basta con 30 Hz; con movimiento, a la frecuencia de la pantalla.
+    if (quieto) { if (!cambio) return; }
+    else {
+      if (cambio || t - tRaton < 2.5 || (enTele && !tele.enReposo)) tActivo = t;
+      if (t - tActivo > 1.5 && t - tPrev < 1 / 30 - 0.004) return;
+    }
+    const intervalo = t - tPrev, dtReal = Math.min(intervalo, 0.05), dt = quieto ? 0 : dtReal;
+    tPrev = t; forzar = false; pausaAntes = quieto;
+    // Solo cuenta para el dpr una racha de 30 cuadros seguidos a ritmo pleno, 2 s después del primer cuadro pintado.
+    if (t0 < 0) t0 = t;
+    if (!quieto && t - tActivo <= 1.5 && t - t0 > 2 && dpr > 1) {
+      sumaInt += Math.min(intervalo, 0.05); // un tirón suelto no basta para bajar; un GPU que no llega, sí
+      if (++nInt === 30) { if (sumaInt / 30 > 0.02) baja(); sumaInt = nInt = 0; }
+    } else sumaInt = nInt = 0;
+    tSim += dt;
     if (bus.dirty) { tex.needsUpdate = true; bus.dirty = false; }
 
     // Ratón: suavizado para el farol, en escena para la cuerda, y un poco de paralaje del ojo.
@@ -281,8 +317,6 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
     const dtR = quieto ? 0 : dtReal;
     const kr = 1 - Math.exp(-dtR * 6), W = u.uRes.value.x, H = u.uRes.value.y, s = u.uCover.value.x / dpr;
     m.x += (bus.mouse[0] * W - m.x) * kr; m.y += (bus.mouse[1] * H - m.y) * kr;
-    const clave = bus.mouse.join();
-    if (clave !== ultimoRaton) { ultimoRaton = clave; tRaton = t; }
     const mx = 960 + (bus.mouse[0] * ancho - ancho / 2) / s, my = 540 + (bus.mouse[1] * alto - alto / 2) / s;
     if (dtReal > 0) { raton.vx += ((mx - raton.x) / dtReal - raton.vx) * 0.3; raton.vy += ((my - raton.y) / dtReal - raton.vy) * 0.3; }
     raton.x = mx; raton.y = my;
@@ -292,7 +326,6 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
     ojo.x += (960 + (bus.mouse[0] - 0.5) * 170 - ojo.x) * kr; ojo.y += (540 + (bus.mouse[1] - 0.5) * 110 - ojo.y) * kr;
 
     // Fogar TV: pegada a su pantalla mientras se ve; una pasada de conversación por visita a la portada.
-    const enTele = f - pista.tele.f0 < pista.tele.q.length;
     if (enTele) {
       if (f !== cuadroTv) {
         const q = enPista(pista.tele.q, pista.tele.f0, f);
@@ -303,7 +336,11 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
       // La conversación de ejemplo arranca cuando la pantalla ya se lee (en el empuje); una pasada por visita.
       if (f >= 26 && f <= 70) { if (!hablo) { tele.habla(tSim); hablo = !tele.enReposo; } }
       else if (f <= 18 && tele.enReposo) hablo = false;
-      if (!quieto || !listo) { tele.paso(tSim, dt); texTv.needsUpdate = true; }
+      // La tele se repinta y se sube (con sus mipmaps) como mucho a 30 Hz en conversación y a 15 Hz en reposo, no en cada cuadro.
+      if (!quieto || !listo) {
+        dtTele += dt;
+        if (!listo || t - tTele >= (tele.enReposo ? 1 / 15 : 1 / 30) - 0.004) { tele.paso(tSim, dtTele); texTv.needsUpdate = true; dtTele = 0; tTele = t; }
+      }
     }
     u.uTvOn.value = quieto ? (enTele ? 1 : 0) : u.uTvOn.value + ((enTele ? 1 : 0) - u.uTvOn.value) * (1 - Math.exp(-dtReal * (enTele ? 1.6 : 8)));
 
@@ -346,18 +383,43 @@ export default function montar(lienzo: HTMLCanvasElement, bus: Bus, textos?: Tex
       u.uHumo.value = humoA.texture;
     }
     dibuja(mFinal, null);
-    // 0,995 y no 1: con un lienzo opaco a pantalla completa, la captura del panel de vista previa salía negra.
-    if (!listo) { listo = true; lienzo.style.opacity = "0.995"; }
-  });
+    estado.cuadros++;
+    // Opaco (1) para que el compositor trate la capa como opaca. Con ?medir, 0,995: con un lienzo opaco a pantalla completa,
+    // la captura del panel de vista previa salía negra.
+    if (!listo) { listo = true; lienzo.style.opacity = medir ? "0.995" : "1"; }
+  };
+
+  // El bucle solo corre con el lienzo a la vista, la pestaña visible y los programas ya compilados.
+  let vivo = true, compilado = false, enVista = true, corriendo = false;
+  const actualiza = () => {
+    const q = vivo && compilado && enVista && !document.hidden;
+    if (q !== corriendo) { corriendo = q; renderer.setAnimationLoop(q ? cuadro : null); }
+  };
+  const io = new IntersectionObserver((es) => { enVista = es[es.length - 1].isIntersecting; actualiza(); });
+  io.observe(lienzo);
+  document.addEventListener("visibilitychange", actualiza);
+
+  // Compila los seis programas antes del primer cuadro, en paralelo si hay KHR_parallel_shader_compile (Shader Compile Stalls,
+  // threejs-performance). La clave del programa depende del destino (búfer o pantalla): se compila cada uno con el suyo.
+  const esperas: Promise<unknown>[] = [];
+  renderer.setRenderTarget(E);
+  esperas.push(renderer.compileAsync(escLinea, camara));
+  for (const mat of [mBaja, mSube, mHumo]) { plano.material = mat; esperas.push(renderer.compileAsync(escPase, camara)); }
+  renderer.setRenderTarget(null);
+  plano.material = mFinal; esperas.push(renderer.compileAsync(escPase, camara));
+  Promise.all(esperas).catch(() => {}).then(() => { compilado = true; actualiza(); });
 
   return () => {
+    vivo = false;
     renderer.setAnimationLoop(null);
+    io.disconnect();
+    document.removeEventListener("visibilitychange", actualiza);
     removeEventListener("resize", resize);
     timer.dispose();
     [E, ...B, ...U, humoA, humoB].forEach((r) => r.dispose());
     [mBaja, mSube, mHumo, mFinal, lamina.mesh.material as ShaderMaterial, nucleo.mesh.material as ShaderMaterial].forEach((x) => x.dispose());
     lamina.mesh.geometry.dispose(); nucleo.mesh.geometry.dispose(); plano.geometry.dispose();
-    tex.dispose(); texTv.dispose(); renderer.dispose();
+    tex.dispose(); texTv.dispose(); renderer.dispose(); renderer.forceContextLoss();
     lienzo.style.opacity = "0";
   };
 }
